@@ -17,7 +17,7 @@ describe('updateCart handler', () => {
     const res: any = await (handler as any)(event);
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body as string);
-    expect(body.message).toMatch(/Cart item updated/);
+    expect(body.message).toMatch(/Item updated/);
     expect(dynamo.putItem).toHaveBeenCalled();
   });
 });

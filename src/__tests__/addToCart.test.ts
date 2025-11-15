@@ -1,4 +1,4 @@
-import { handler } from '../handlers/listCart';
+import { handler } from '../handlers/addToCart';
 import * as dynamo from '../lib/dynamo';
 
 (dynamo.putItem as any) = jest.fn().mockResolvedValue(undefined);
