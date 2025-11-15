@@ -8,16 +8,14 @@ A **production-ready, serverless e-commerce shopping cart API** built with **AWS
 
 ## About
 
-### Project Overview
+**Serverless Shopping Cart** is a cloud-native REST API for managing shopping carts in e-commerce applications. Built entirely on AWS managed services (Lambda, API Gateway, DynamoDB, SQS, Cognito), it demonstrates serverless architecture patterns:
 
-The **Serverless Shopping Cart** is a cloud-native, fully serverless REST API for managing shopping carts in e-commerce applications. It leverages AWS managed services (Lambda, API Gateway, DynamoDB, SQS, Cognito, CloudWatch) to provide a scalable, cost-effective, and maintainable solution with minimal operational overhead.
-
-The architecture showcases:
 - **Event-driven workflows** via DynamoDB Streams and SQS queues
-- **Asynchronous processing** for long-running operations
-- **Authorization & authentication** with Cognito
-- **Real-time aggregation** for analytics and monitoring
-- **Infrastructure as Code** with AWS SAM
+- **Asynchronous processing** for long-running operations (delete, migrate)
+- **Fine-grained authorization** with Cognito (checkout & migration endpoints)
+- **Real-time aggregation** and analytics from DynamoDB Stream events
+- **Infrastructure as Code** with AWS SAM for reproducible deployments
+- **Production-ready** with comprehensive logging, error handling, and monitoring
 
 ### Key Features
 
@@ -52,6 +50,24 @@ The architecture showcases:
 ### Tags
 
 `#serverless` `#aws` `#lambda` `#typescript` `#sam` `#api` `#dynamodb` `#sqs` `#cognito` `#event-driven` `#infrastructure-as-code` `#production-ready` `#cloud-native` `#e-commerce`
+
+---
+
+## Frontend Integration
+
+A companion **frontend application** is planned to demonstrate the API in action. Once the backend is complete, a simple web or mobile UI will be added in a `frontend/` directory to showcase:
+
+- User authentication via Cognito
+- Real-time cart updates
+- Product browsing and cart management
+- Checkout workflow
+- Order history and aggregated data visualization
+
+**Frontend technologies** (to be determined based on project needs):
+- React, Vue.js, or Next.js for web UI
+- Optional: React Native or Flutter for mobile demo
+- Cognito SDK for authentication
+- API client (Axios, Fetch) for backend integration
 
 ---
 
@@ -144,6 +160,17 @@ serverless-shopping-cart/
 │   └── utils/
 │       └── logger.ts              # Centralized logging
 ├── dist/                          # Compiled JavaScript (gitignored)
+├── frontend/                      # Frontend application (React/Vue/Next.js)
+│   ├── src/
+│   │   ├── components/            # Reusable UI components
+│   │   ├── pages/                 # Page-level components
+│   │   ├── services/              # API client and Cognito integration
+│   │   ├── types/                 # TypeScript types
+│   │   └── utils/                 # Helper functions
+│   ├── public/                    # Static assets
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── README.md                  # Frontend setup guide
 ├── template.yaml                  # SAM template
 ├── package.json
 ├── tsconfig.json
