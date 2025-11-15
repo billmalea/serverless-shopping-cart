@@ -13,6 +13,10 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CartUserPool.Arn
 
   CartTable:
     Type: AWS::DynamoDB::Table
@@ -108,6 +112,8 @@ Resources:
             Path: /cart/migrate
             Method: post
             RestApiId: !Ref Api
+            Auth:
+              Authorizer: CognitoAuthorizer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CartTable
@@ -140,6 +146,8 @@ Resources:
             Path: /cart/checkout
             Method: post
             RestApiId: !Ref Api
+            Auth:
+              Authorizer: CognitoAuthorizer
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref CartTable
@@ -157,6 +165,21 @@ Resources:
             StartingPosition: TRIM_HORIZON
       Policies:
         - CloudWatchPutMetricPolicy: {}
+
+  # Cognito User Pool for protecting sensitive endpoints
+  CartUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: cart-user-pool
+      AutoVerifiedAttributes:
+        - email
+
+  CartUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: cart-user-pool-client
+      UserPoolId: !Ref CartUserPool
+      GenerateSecret: false
 
 Outputs:
   ApiUrl:
