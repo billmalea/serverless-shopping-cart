@@ -1,0 +1,12 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /cart",
+  "rawPath": "/cart",
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/cart"
+    }
+  },
+  "body": "{ \"userId\": \"user-123\", \"items\": [] }"
+}
