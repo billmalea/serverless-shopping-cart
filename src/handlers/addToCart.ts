@@ -1,51 +1,64 @@
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { CartItem } from '../types';
-import { putItem } from '../lib/dynamo';
+import ddb from '../lib/dynamo';
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 const TABLE_NAME = process.env.TABLE_NAME || 'cart-table';
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+  }
+
   try {
+    // Handle preflight
+    if (event.requestContext && event.requestContext.http && event.requestContext.http.method === 'OPTIONS') {
+      return { statusCode: 200, headers }
+    }
+
     if (!event.body) {
-      return { statusCode: 400, body: JSON.stringify({ message: 'Missing body' }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ message: 'Missing body' }) };
     }
 
     const payload = JSON.parse(event.body);
     const { userId, productId, quantity, price } = payload;
-    if (!userId || !productId || !quantity) {
-      return { statusCode: 400, body: JSON.stringify({ message: 'userId, productId and quantity are required' }) };
+    if (!userId || !productId || typeof quantity === 'undefined') {
+      return { statusCode: 400, headers, body: JSON.stringify({ message: 'userId, productId and quantity are required' }) };
     }
 
-    const item: CartItem = {
-      userId,
-      productId,
-      quantity: Number(quantity),
-      price: price ? Number(price) : undefined,
-      addedAt: new Date().toISOString(),
-    };
+    const inc = Number(quantity);
+    const now = new Date().toISOString();
+    const itemId = uuidv4();
 
-    // DynamoDB item design: PK = USER#<userId>, SK = PRODUCT#<productId>
-    const dbItem = {
-      PK: `USER#${userId}`,
-      SK: `PRODUCT#${productId}`,
-      ItemId: uuidv4(),
-      ...item,
-    };
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { PK: `USER#${userId}`, SK: `PRODUCT#${productId}` },
+      UpdateExpression:
+        'SET ItemId = if_not_exists(ItemId, :itemId), userId = :userId, productId = :productId, price = if_not_exists(price, :price), updatedAt = :now, addedAt = if_not_exists(addedAt, :now), quantity = if_not_exists(quantity, :zero) + :inc',
+      ExpressionAttributeValues: {
+        ':itemId': itemId,
+        ':userId': userId,
+        ':productId': productId,
+        ':price': price ? Number(price) : 0,
+        ':now': now,
+        ':zero': 0,
+        ':inc': inc,
+      },
+      ReturnValues: 'ALL_NEW',
+    } as any;
 
     try {
-      await putItem(TABLE_NAME, dbItem);
+      const result = await ddb.send(new UpdateCommand(params));
+      const attrs = result.Attributes || {};
+      return { statusCode: 201, headers, body: JSON.stringify({ message: 'Item added/updated', item: attrs }) };
     } catch (dbErr) {
-      console.warn('DynamoDB put failed (local dev), returning mock response:', dbErr);
-      // In local dev without DynamoDB, return success with mock data
+      console.warn('DynamoDB update failed (local dev), returning mock response:', dbErr);
+      return { statusCode: 201, headers, body: JSON.stringify({ message: 'Item added (mock)', item: { PK: `USER#${userId}`, SK: `PRODUCT#${productId}`, ItemId: itemId, userId, productId, quantity: inc, price, addedAt: now } }) };
     }
-
-    return {
-      statusCode: 201,
-      body: JSON.stringify({ message: 'Item added to cart', item: dbItem }),
-    };
   } catch (err) {
     console.error('addToCart error', err);
-    return { statusCode: 500, body: JSON.stringify({ message: (err as any).message || 'Internal server error' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ message: (err as any).message || 'Internal server error' }) };
   }
 };

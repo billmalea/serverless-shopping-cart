@@ -71,6 +71,25 @@ A companion **frontend application** is planned to demonstrate the API in action
 
 ---
 
+## Images
+
+Screenshots from the demo frontend (place image files under `docs/screenshots/`):
+
+- **Products page**
+
+  ![Products screenshot](docs/screenshots/Screenshot%202025-11-17%20000155.png)
+
+- **Checkout (simulated)**
+
+  ![Checkout screenshot](docs/screenshots/Screenshot%202025-11-17%20000257.png)
+
+If the images don't display, add the two files to `docs/screenshots/` with the exact filenames:
+
+`Screenshot 2025-11-17 000155.png`
+
+`Screenshot 2025-11-17 000257.png`
+
+
 ## Architecture
 
 The shopping cart system is composed of the following AWS resources:

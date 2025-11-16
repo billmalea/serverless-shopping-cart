@@ -56,14 +56,20 @@ npm install
 
 ### Configuration
 
-Create a `.env` file based on `.env.example`:
+Create a `.env.local` file based on `.env.local.example` (already present in the repo). Example values are provided in `.env.local.example`.
 
-```env
-VITE_API_ENDPOINT=https://your-api-gateway-url
-VITE_COGNITO_DOMAIN=your-cognito-domain
-VITE_COGNITO_CLIENT_ID=your-client-id
-VITE_COGNITO_REDIRECT_URI=http://localhost:3000/callback
-```
+Notes about CORS and local development:
+
+- The backend API (API Gateway) must return CORS headers for browser clients. For production you should enable CORS in the SAM template or API Gateway configuration. We also provide a development proxy so you can iterate locally without changing AWS infra.
+
+- Development (recommended): use Vite's proxy (already configured) so the frontend calls `/api/*` and Vite forwards requests to the deployed API. This avoids CORS preflight issues during development.
+
+	Steps:
+
+	1. Copy `.env.local.example` to `.env.local` and fill in your Cognito domain and client id. By default `VITE_API_URL` is `/api/` which enables the proxy.
+	2. Run `npm run dev` and open `http://localhost:3000`.
+
+- Production: enable CORS on the API by adding appropriate `Cors` configuration to the SAM template (or configure API Gateway) and deploy. The SAM template in the repo now includes a CORS block allowing `http://localhost:3000`; change this to your production origin before deploying.
 
 ### Development
 
@@ -72,6 +78,12 @@ npm run dev
 ```
 
 Opens at `http://localhost:3000`
+
+### Local dev notes (CORS & proxy)
+
+- The frontend uses a Vite dev proxy that forwards `/api/*` to your deployed API Gateway so you don't need to change backend CORS during development. See `vite.config.js`.
+- For production you should enable CORS on the API Gateway (SAM `Api` resource). A development-friendly CORS example has been added to `template.yaml` allowing `http://localhost:3000`.
+- Use `frontend/.env.local.example` as a starting point to set `VITE_API_URL`, Cognito domain and client id.
 
 ### Build
 

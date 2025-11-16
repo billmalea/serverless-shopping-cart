@@ -8,6 +8,16 @@ Globals:
     Timeout: 10
     MemorySize: 128
 
+Parameters:
+  CallbackURLs:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of allowed OAuth callback URLs for the Cognito App Client
+    Default: "http://localhost:3000/callback,http://localhost:5173/callback"
+  LogoutURLs:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of allowed logout URLs for the Cognito App Client
+    Default: "http://localhost:3000/,http://localhost:5173/"
+
 Resources:
   Api:
     Type: AWS::Serverless::Api
@@ -17,6 +27,11 @@ Resources:
         Authorizers:
           CognitoAuthorizer:
             UserPoolArn: !GetAtt CartUserPool.Arn
+      # CORS configuration for local development and production
+      Cors:
+        AllowOrigin: "'http://localhost:3000'"
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
 
   CartTable:
     Type: AWS::DynamoDB::Table
@@ -201,7 +216,16 @@ Resources:
       GenerateSecret: false
       ExplicitAuthFlows:
         - ADMIN_NO_SRP_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
+      # Enable Authorization Code flow (PKCE) for SPA clients
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - profile
+        - email
+      CallbackURLs: !Ref CallbackURLs
+      LogoutURLs: !Ref LogoutURLs
 
 Outputs:
   ApiUrl:
