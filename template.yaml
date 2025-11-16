@@ -81,6 +81,25 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref CartTable
 
+  ProductsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/products.handler
+      CodeUri: .
+      Events:
+        ProductsApi:
+          Type: Api
+          Properties:
+            Path: /products
+            Method: get
+            RestApiId: !Ref Api
+        ProductApi:
+          Type: Api
+          Properties:
+            Path: /products/{productId}
+            Method: get
+            RestApiId: !Ref Api
+
   UpdateCartFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -180,6 +199,9 @@ Resources:
       ClientName: cart-user-pool-client
       UserPoolId: !Ref CartUserPool
       GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
 
 Outputs:
   ApiUrl:

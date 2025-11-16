@@ -3,6 +3,8 @@ dist/
 .aws-sam/
 .env
 .env.*
+# Cognito test tokens (created by scripts/create-test-user.ts)
+.env.cognito
 coverage/
 npm-debug.log*
 .DS_Store

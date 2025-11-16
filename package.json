@@ -2,6 +2,7 @@
   "name": "serverless-shopping-cart",
   "version": "0.1.0",
   "private": true,
+  "files": ["dist"],
   "description": "Serverless shopping cart scaffold (AWS SAM + TypeScript)",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -19,6 +20,7 @@
     "@aws-sdk/lib-dynamodb": "^3.382.0",
     "@aws-sdk/client-sqs": "^3.382.0",
     "@aws-sdk/util-dynamodb": "^3.382.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.382.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

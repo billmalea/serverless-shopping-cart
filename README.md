@@ -110,6 +110,7 @@ The shopping cart system is composed of the following AWS resources:
 - **Node.js 18+** and npm
 - **AWS CLI** configured with credentials
 - **AWS SAM CLI** (for local testing and deployment)
+ - **AWS Cognito (optional)**: This project includes a Cognito User Pool created by SAM for protecting checkout and migration endpoints.
 - **TypeScript knowledge** (recommended)
 - **Git**
 
@@ -225,6 +226,52 @@ curl -X POST http://localhost:3000/cart \
   -H "Content-Type: application/json" \
   -d '{"userId":"user-123","productId":"prod-456","quantity":2}'
 ```
+
+Product simulator
+-----------------
+
+This project includes a small product catalog simulator so you can test cart flows without a separate product microservice.
+
+- List all products:
+
+```bash
+curl http://localhost:3000/products
+```
+
+- Get a single product by id:
+
+```bash
+curl http://localhost:3000/products/prod-001
+```
+
+The product endpoint is a simple in-memory catalog used for development and testing. Feel free to extend `src/handlers/products.ts` with more fields or to load data from a JSON file for larger catalogs.
+
+### Cognito usage (dev)
+
+The SAM template creates a `CartUserPool` and `CartUserPoolClient`. To run protected endpoint tests you can create a test user and obtain tokens using the included script:
+
+PowerShell / bash example (requires AWS credentials with permissions to manage Cognito):
+
+```powershell
+# set environment variables from SAM outputs or AWS Console
+$env:CART_USER_POOL_ID = "<your-user-pool-id>"
+$env:CART_USER_POOL_CLIENT_ID = "<your-client-id>"
+
+npx ts-node scripts/create-test-user.ts
+```
+
+The script prints `IdToken` and `AccessToken`. Call protected endpoints with the `Authorization` header:
+
+```bash
+curl -X POST https://<api-url>/cart/checkout \
+  -H "Authorization: Bearer <AccessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"user-123"}'
+```
+
+Notes:
+- The script uses admin APIs (`AdminCreateUser`, `AdminInitiateAuth`) and requires AWS credentials with sufficient permissions.
+- For CI/tests, you can programmatically create/delete the test user and reuse the tokens.
 
 ---
 

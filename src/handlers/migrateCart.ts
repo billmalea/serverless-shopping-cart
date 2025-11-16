@@ -9,6 +9,10 @@ const sqs = new SQSClient({});
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
+    // Extract caller identity (Cognito) if present
+    const claims = (event as any)?.requestContext?.authorizer?.jwt?.claims;
+    const actor = claims ? { user: claims['cognito:username'] || claims.sub, claims } : undefined;
+
     if (!event.body) {
       return { statusCode: 400, body: JSON.stringify({ message: 'Missing body' }) };
     }
@@ -29,28 +33,35 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     const written = [] as any[];
     for (const it of itemsToMigrate) {
+      // If a targetUserId is provided, write the migrated item under that user
+      const destinationUser = targetUserId || userId;
       const dbItem = {
-        PK: `USER#${userId}`,
+        PK: `USER#${destinationUser}`,
         SK: `PRODUCT#${it.productId}`,
         ItemId: uuidv4(),
-        userId,
+        userId: destinationUser,
         productId: it.productId,
         quantity: Number(it.quantity || 1),
         price: it.price ? Number(it.price) : undefined,
         migratedAt: new Date().toISOString(),
       };
 
-      // Persist migrated item
+      // Persist migrated item and only record it as written on success
+      let putSucceeded = false;
       try {
         await putItem(TABLE_NAME, dbItem);
+        putSucceeded = true;
       } catch (dbErr) {
         console.warn('DynamoDB put failed (local dev):', dbErr);
       }
-      written.push(dbItem);
+      if (putSucceeded) {
+        written.push(dbItem);
+      }
 
       // Send a delete message to the queue to allow async cleanup of old items
       if (QUEUE_URL) {
         try {
+          // Delete payload should remove the original item from the source user
           const msgPayload = { action: 'delete', userId, productId: it.productId };
           await sqs.send(
             new SendMessageCommand({
@@ -64,7 +75,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }
     }
 
-    return { statusCode: 200, body: JSON.stringify({ message: 'Migration completed', written }) };
+    return { statusCode: 200, body: JSON.stringify({ message: 'Migration completed', written, actor }) };
   } catch (err) {
     console.error('migrateCart error', err);
     return { statusCode: 500, body: JSON.stringify({ message: 'Internal server error' }) };
